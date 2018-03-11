@@ -1,16 +1,18 @@
 #include <opencv2/opencv.hpp>
+#include <cstdlib>
+
 #include "Win2dptMap.h"
 
 int main() {
-    
-
     vector<Point2f> pts;
-    pts.push_back(Point2f(100, 100));
-    pts.push_back(Point2f(100, 200));
-    pts.push_back(Point2f(200, 100));
-    pts.push_back(Point2f(200, 200));
 
-    cv::Mat img(cv::Mat::zeros(512, 512, CV_64FC3));
+    int width = 1000, height = 2000;
+
+    for(int lx = 0;lx < 100;lx++) {
+        pts.push_back(Point2f(std::rand()%height, std::rand()%width));
+    }
+
+    cv::Mat img(cv::Mat::zeros(1000, 2000, CV_64FC3));
 
     Win2dptMap win2dpt(pts, [](int index){
         printf("%d\n", index);

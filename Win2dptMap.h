@@ -5,6 +5,7 @@
 #include <string>
 #include <functional>
 #include <vector>
+#include <algorithm>
 
 using std::vector;
 using std::string;
@@ -14,7 +15,21 @@ class Win2dptMap {
 public:
     
     Win2dptMap(const vector<Point2f>& _pts, std::function<void(int)> callback, const cv::Mat& _bg) :
-        pts(_pts), func(callback), win_title("Win 2dpt Mapping"), bg(_bg) {
+        pts(_pts), func(callback), win_title("Win 2dpt Mapping"), bg(_bg), select_index(-1) {
+        // Scale < Len Limit
+        const float width_len_limit = 1024,
+                    height_len_limit = 768;
+        cv::Size sz = bg.size();
+        if(sz.width > width_len_limit or sz.height > height_len_limit) {
+            float ratio = std::max(sz.width/width_len_limit, sz.height/height_len_limit);
+            int new_w = sz.width/ratio, new_h = sz.height/ratio;
+            cv::resize(bg, bg, cv::Size(new_w, new_h));
+
+            for(Point2f& pt : pts) {
+                pt /= ratio;
+            }
+        }
+        // Draw pts
         for(Point2f& pt : pts) {
             circle(bg, pt, 3, cv::Scalar(0, 255, 0), 3);
         }
@@ -30,22 +45,30 @@ public:
     }
 
     static void mouseEvent(int event, int x, int y, int flags, void* param) {
-        if(event != CV_EVENT_LBUTTONDOWN) {
-            return;
-        }
         Win2dptMap* _this = (Win2dptMap*) param;
-        double dist = 10000000000.;
-        int call_index = -1;
+        double dist = 6.1;
+        int pt_index = -1;
         for(int lx = 0;lx < _this->pts.size();lx++) {
             Point2f& pt = _this->pts[lx];
             double cdist = cv::norm(pt - Point2f(x, y));
             if(cdist < dist) {
                 dist = cdist;
-                call_index = lx;
+                pt_index = lx;
             }
         }
-        if(call_index != -1) {
-            _this->func(call_index);
+
+        if(_this->select_index != -1) {
+            circle(_this->bg, _this->pts[_this->select_index], 3, cv::Scalar(0, 255, 0), 3);
+            imshow(_this->win_title, _this->bg);
+        }
+
+        if(pt_index != -1) {
+            circle(_this->bg, _this->pts[pt_index], 4, cv::Scalar(0, 0, 255), 2);
+            _this->select_index = pt_index;
+            imshow(_this->win_title, _this->bg);
+            if(event == CV_EVENT_LBUTTONDOWN) {
+                _this->func(pt_index);
+            }
         }
         return;
     }
@@ -55,4 +78,7 @@ private:
     std::function<void(int)> func;
     string win_title;
     cv::Mat bg;
+    
+    // GUI
+    int select_index;
 };
