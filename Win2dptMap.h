@@ -14,8 +14,11 @@ using cv::Point2f;
 class Win2dptMap {
 public:
     
-    Win2dptMap(const vector<Point2f>& _pts, std::function<void(int)> callback, const cv::Mat& _bg) :
-        pts(_pts), func(callback), win_title("Win 2dpt Mapping"), bg(_bg), select_index(-1) {
+    Win2dptMap(const vector<Point2f>& _pts, std::function<void(int)> callback, const cv::Mat& _bg,
+               float _point_radius = 1, cv::Scalar _point_color = cv::Scalar(0, 255, 0),
+               cv::Scalar _point_selected_color = cv::Scalar(0, 0, 255)) :
+        pts(_pts), func(callback), win_title("Win 2dpt Mapping"), bg(_bg), select_index(-1),
+        point_radius(_point_radius), point_color(_point_color), point_selected_color(_point_selected_color) {
         // Scale < Len Limit
         const float width_len_limit = 1024,
                     height_len_limit = 768;
@@ -31,7 +34,7 @@ public:
         }
         // Draw pts
         for(Point2f& pt : pts) {
-            circle(bg, pt, 3, cv::Scalar(0, 255, 0), 3);
+            circle(bg, pt, point_radius, point_color);
         }
         return;
     }
@@ -46,7 +49,7 @@ public:
 
     static void mouseEvent(int event, int x, int y, int flags, void* param) {
         Win2dptMap* _this = (Win2dptMap*) param;
-        double dist = 6.1;
+        double dist = 2*_this->point_radius;
         int pt_index = -1;
         for(int lx = 0;lx < _this->pts.size();lx++) {
             Point2f& pt = _this->pts[lx];
@@ -58,12 +61,12 @@ public:
         }
 
         if(_this->select_index != -1) {
-            circle(_this->bg, _this->pts[_this->select_index], 3, cv::Scalar(0, 255, 0), 3);
+            circle(_this->bg, _this->pts[_this->select_index], _this->point_radius, _this->point_color);
             imshow(_this->win_title, _this->bg);
         }
 
         if(pt_index != -1) {
-            circle(_this->bg, _this->pts[pt_index], 4, cv::Scalar(0, 0, 255), 2);
+            circle(_this->bg, _this->pts[pt_index], _this->point_radius, _this->point_selected_color);
             _this->select_index = pt_index;
             imshow(_this->win_title, _this->bg);
             if(event == CV_EVENT_LBUTTONDOWN) {
@@ -78,6 +81,11 @@ private:
     std::function<void(int)> func;
     string win_title;
     cv::Mat bg;
+
+    // GUI Options
+    float point_radius;
+    cv::Scalar point_color;
+    cv::Scalar point_selected_color;
     
     // GUI
     int select_index;

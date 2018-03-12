@@ -17,7 +17,7 @@ int main() {
     Win2dptMap win2dpt(pts, [](int index){
         printf("%d\n", index);
         return;
-    }, img); 
+    }, img, 2); 
 
     win2dpt.show();
 
